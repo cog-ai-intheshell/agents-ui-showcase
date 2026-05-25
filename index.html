@@ -1,0 +1,1826 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Agent UI Mesh</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --blue: #1677e8;
+        --blue-dark: #0f5fbd;
+        --green: #27AE60;
+        --red: #EB5757;
+        --orange: #e87511;
+        --primary: var(--blue);
+        --primary-dark: var(--blue-dark);
+        --ink: #111827;
+        --text: #111827;
+        --muted: #4b5563;
+        --line: #dfe5ee;
+        --subtle-line: #edf1f6;
+        --panel: #ffffff;
+        --page: #f6f8fb;
+        --sidebar: #fbfcfe;
+        --field-bg: #ffffff;
+        --field-border: #ccd6e1;
+        --control-bg: #ffffff;
+        --control-bg-hover: #f4f8ff;
+        --control-text: #0f5fbd;
+        --table-border: #dfe5ee;
+        --table-border-soft: #edf1f6;
+        --table-hover: #f8fafc;
+        --scene-bg: #ffffff;
+        --canvas-bg: #ffffff;
+        --canvas-grid: #d8dee8;
+        --canvas-axis: #8b96a8;
+        --canvas-agent: #1677e8;
+        --canvas-agent-hot: #e87511;
+        --canvas-memory: #27AE60;
+        --canvas-risk: #EB5757;
+        --canvas-critic: #991B1B;
+        --primary-button-text: #ffffff;
+        --primary-gradient: linear-gradient(180deg, #1a83f5 0%, #0f72df 100%);
+        --primary-gradient-hover: linear-gradient(180deg, #2490ff 0%, #1069ce 100%);
+        --card-shadow: 0 3px 16px rgba(17, 24, 39, 0.04);
+        --radius-control: 6px;
+        --radius-field: 7px;
+        --radius-card: 8px;
+        --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        --bottom-height: clamp(228px, 29vh, 324px);
+        --inspector-width: clamp(286px, 22vw, 392px);
+      }
+
+      body[data-theme="dark"] {
+        color-scheme: dark;
+        --bg1: #191919;
+        --bg2: #222222;
+        --primary: #5D71FC;
+        --blue: #5D71FC;
+        --blue-dark: #5D71FC;
+        --page: var(--bg1);
+        --panel: var(--bg2);
+        --sidebar: var(--bg2);
+        --scene-bg: var(--bg1);
+        --canvas-bg: var(--bg1);
+        --ink: #f8f8f8;
+        --text: #f8f8f8;
+        --muted: rgba(248, 248, 248, 0.62);
+        --line: transparent;
+        --subtle-line: transparent;
+        --field-border: transparent;
+        --field-bg: var(--bg1);
+        --control-bg: var(--bg1);
+        --control-bg-hover: var(--bg2);
+        --control-text: var(--primary);
+        --table-border: rgba(248, 248, 248, 0.08);
+        --table-border-soft: rgba(248, 248, 248, 0.055);
+        --table-hover: rgba(255, 255, 255, 0.025);
+        --primary-gradient: linear-gradient(180deg, var(--primary) 0%, var(--primary) 100%);
+        --primary-gradient-hover: linear-gradient(180deg, var(--primary) 0%, var(--primary) 100%);
+        --primary-button-text: #f8f8f8;
+        --card-shadow: none;
+        --canvas-grid: rgba(248, 248, 248, 0.08);
+        --canvas-axis: rgba(248, 248, 248, 0.42);
+        --canvas-agent: #5D71FC;
+        --canvas-agent-hot: #f89540;
+        --canvas-memory: #27AE60;
+        --canvas-risk: #EB5757;
+        --canvas-critic: #f89540;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        color: var(--text);
+        background: var(--page);
+      }
+
+      body,
+      button,
+      input,
+      select,
+      table {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      button,
+      input[type="range"],
+      input[type="checkbox"],
+      select {
+        cursor: pointer;
+      }
+
+      .app-shell {
+        display: grid;
+        grid-template-columns: clamp(292px, 20vw, 370px) minmax(0, 1fr) var(--inspector-width);
+        width: 100vw;
+        height: 100vh;
+        min-height: 680px;
+      }
+
+      .sidebar,
+      .inspector {
+        min-width: 0;
+        height: 100vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        background: var(--sidebar);
+      }
+
+      .sidebar {
+        border-right: 1px solid var(--line);
+      }
+
+      .inspector {
+        border-left: 1px solid var(--line);
+      }
+
+      .sidebar-inner,
+      .inspector-inner {
+        padding: 18px 18px 22px;
+      }
+
+      .brand {
+        padding: 0 0 14px;
+      }
+
+      .brand h1 {
+        margin: 0 0 4px;
+        font-size: 24px;
+        line-height: 1.15;
+        font-weight: 800;
+      }
+
+      .brand p,
+      .panel-copy {
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.35;
+      }
+
+      .control-section,
+      .inspector-section {
+        padding: 15px 0 12px;
+        border-top: 1px solid var(--line);
+      }
+
+      .control-section h2,
+      .inspector-section h2,
+      .data-card h2 {
+        margin: 0 0 12px;
+        font-size: 14px;
+        line-height: 1.1;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .primary-button,
+      .secondary-button {
+        width: 100%;
+        height: 36px;
+        border-radius: var(--radius-control);
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .primary-button {
+        margin: 0 0 10px;
+        color: var(--primary-button-text);
+        background: var(--primary-gradient);
+        border: 0;
+      }
+
+      .primary-button:hover {
+        background: var(--primary-gradient-hover);
+      }
+
+      .secondary-button {
+        margin: 0 0 9px;
+        color: var(--control-text);
+        background: var(--control-bg);
+        border: 1px solid var(--field-border);
+      }
+
+      .secondary-button:hover,
+      .header-button:hover {
+        background: var(--control-bg-hover);
+        border-color: var(--primary);
+      }
+
+      .button-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .button-row .secondary-button {
+        margin: 0;
+      }
+
+      .select-field,
+      .range-field {
+        display: grid;
+        gap: 7px;
+        margin-top: 12px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .select-field select {
+        width: 100%;
+        height: 34px;
+        padding: 0 10px;
+        color: var(--text);
+        background: var(--field-bg);
+        border: 1px solid var(--field-border);
+        border-radius: var(--radius-field);
+      }
+
+      .range-field header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .range-field output {
+        color: var(--text);
+        font-variant-numeric: tabular-nums;
+      }
+
+      input[type="range"] {
+        --range-progress: 50%;
+        --slider-fill: var(--primary);
+        --slider-track: var(--line);
+        appearance: none;
+        width: 100%;
+        height: 22px;
+        background: transparent;
+        accent-color: var(--slider-fill);
+      }
+
+      body[data-theme="dark"] input[type="range"] {
+        --slider-track: #191919;
+      }
+
+      input[type="range"]::-webkit-slider-runnable-track {
+        height: 6px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--slider-fill) 0%, var(--slider-fill) var(--range-progress), var(--slider-track) var(--range-progress), var(--slider-track) 100%);
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        margin-top: -5px;
+        border: 0;
+        border-radius: 999px;
+        background: var(--slider-fill);
+      }
+
+      input[type="range"]::-moz-range-track {
+        height: 6px;
+        border-radius: 999px;
+        background: var(--slider-track);
+      }
+
+      input[type="range"]::-moz-range-progress {
+        height: 6px;
+        border-radius: 999px;
+        background: var(--slider-fill);
+      }
+
+      input[type="range"]::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border: 0;
+        border-radius: 999px;
+        background: var(--slider-fill);
+      }
+
+      .toggle-field {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        min-height: 34px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .toggle-field input[type="checkbox"] {
+        appearance: none;
+        position: relative;
+        width: 34px;
+        height: 18px;
+        flex: 0 0 auto;
+        margin: 0;
+        border: 0;
+        border-radius: 999px;
+        background: #cfd8e3;
+        transition: background 0.18s ease;
+      }
+
+      .toggle-field input[type="checkbox"]::before {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+        background: #ffffff;
+        transition: transform 0.18s ease;
+      }
+
+      .toggle-field input[type="checkbox"]:checked {
+        background: var(--primary);
+      }
+
+      .toggle-field input[type="checkbox"]:checked::before {
+        transform: translateX(16px);
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-rows: minmax(0, 1fr) var(--bottom-height);
+        gap: 12px;
+        min-width: 0;
+        height: 100vh;
+        padding: 10px 12px 12px;
+        overflow: hidden;
+      }
+
+      .simulation-card,
+      .data-card {
+        min-width: 0;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-card);
+        box-shadow: var(--card-shadow);
+      }
+
+      .simulation-card {
+        display: grid;
+        grid-template-rows: 48px minmax(0, 1fr) 36px;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      .sim-header {
+        display: grid;
+        grid-template-columns: minmax(0, auto) minmax(160px, 1fr) max-content;
+        align-items: center;
+        column-gap: 14px;
+        height: 48px;
+        padding: 0 12px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+      }
+
+      .header-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 28px;
+        min-width: 30px;
+        padding: 0 10px;
+        color: var(--control-text);
+        background: var(--control-bg);
+        border: 1px solid var(--field-border);
+        border-radius: var(--radius-control);
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .header-button.is-active {
+        color: #ffffff;
+        border-color: var(--primary);
+        background: var(--primary);
+      }
+
+      .icon-button,
+      .theme-toggle-button {
+        width: 30px;
+        padding: 0;
+        font-size: 16px;
+        line-height: 1;
+      }
+
+      .theme-toggle-button {
+        font-size: 18px;
+      }
+
+      .sim-header h2 {
+        justify-self: center;
+        margin: 0;
+        font-size: 17px;
+        line-height: 1;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .sim-header p {
+        justify-self: end;
+        margin: 0;
+        max-width: 440px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1;
+        font-weight: 650;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .scene-frame {
+        position: relative;
+        min-height: 0;
+        overflow: hidden;
+        background-color: var(--scene-bg);
+        background-image:
+          linear-gradient(to right, var(--canvas-grid) 1px, transparent 1px),
+          linear-gradient(to bottom, var(--canvas-grid) 1px, transparent 1px);
+        background-size: 48px 48px;
+      }
+
+      #agentCanvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .scene-tooltip {
+        position: absolute;
+        left: 0;
+        top: 0;
+        max-width: 260px;
+        padding: 8px 10px;
+        color: #f8f8f8;
+        background: rgba(8, 14, 36, 0.92);
+        border: 1px solid rgba(180, 192, 255, 0.22);
+        border-radius: var(--radius-card);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.24);
+        font-size: 12px;
+        line-height: 1.35;
+        pointer-events: none;
+        opacity: 0;
+        transform: translate(-999px, -999px);
+      }
+
+      .scene-tooltip strong {
+        display: block;
+        margin-bottom: 3px;
+      }
+
+      .legend-strip {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+        padding: 0 12px;
+        border-top: 1px solid var(--line);
+        overflow: hidden;
+      }
+
+      .legend-token {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+        color: var(--muted);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .legend-dot {
+        width: 10px;
+        height: 10px;
+        flex: 0 0 auto;
+        border-radius: 999px;
+        background: var(--dot);
+      }
+
+      .bottom-grid {
+        display: grid;
+        grid-template-columns: minmax(320px, 1fr) minmax(0, 1.25fr);
+        gap: 12px;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      .data-card {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      .data-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        min-height: 42px;
+        padding: 12px 12px 8px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .data-card h2 {
+        margin: 0;
+      }
+
+      .data-body {
+        min-height: 0;
+        overflow: auto;
+        padding: 11px 12px;
+      }
+
+      .trace-list {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .trace-list li {
+        display: grid;
+        grid-template-columns: 52px minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .trace-list time {
+        color: var(--text);
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      th,
+      td {
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--table-border-soft);
+        text-align: left;
+        vertical-align: middle;
+      }
+
+      th {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      tr:hover td {
+        background: var(--table-hover);
+      }
+
+      .state-grid,
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .metric {
+        min-width: 0;
+        padding: 8px 9px;
+        background: var(--field-bg);
+        border: 1px solid var(--field-border);
+        border-radius: var(--radius-card);
+      }
+
+      .metric span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.1;
+      }
+
+      .metric strong {
+        display: block;
+        margin-top: 4px;
+        color: var(--text);
+        font-size: 18px;
+        line-height: 1.1;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .agent-profile {
+        display: grid;
+        gap: 11px;
+      }
+
+      .agent-title h3 {
+        margin: 0 0 4px;
+        font-size: 20px;
+        line-height: 1.1;
+      }
+
+      .agent-title p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .bar-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .bar-row {
+        display: grid;
+        grid-template-columns: minmax(0, 88px) minmax(0, 1fr) 38px;
+        gap: 8px;
+        align-items: center;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .bar-track {
+        height: 6px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: var(--field-bg);
+      }
+
+      .bar-fill {
+        width: var(--value);
+        height: 100%;
+        border-radius: inherit;
+        background: var(--bar, var(--primary));
+      }
+
+      .message-stack {
+        display: grid;
+        gap: 8px;
+      }
+
+      .message-line {
+        display: grid;
+        grid-template-columns: 9px minmax(0, 1fr);
+        gap: 8px;
+        align-items: start;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .message-line::before {
+        content: "";
+        width: 9px;
+        height: 9px;
+        margin-top: 4px;
+        border-radius: 999px;
+        background: var(--dot, var(--primary));
+      }
+
+      .agent-key {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .agent-key li {
+        display: grid;
+        grid-template-columns: 11px minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: center;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .agent-key i {
+        width: 11px;
+        height: 11px;
+        border-radius: 3px;
+        background: var(--agent-color);
+      }
+
+      .agent-key strong {
+        color: var(--text);
+        font-weight: 800;
+      }
+
+      body.is-fullscreen-scene {
+        overflow: hidden;
+      }
+
+      body.is-fullscreen-scene .app-shell {
+        grid-template-columns: 1fr;
+        height: 100vh;
+        min-height: 0;
+      }
+
+      body.is-fullscreen-scene .sidebar,
+      body.is-fullscreen-scene .inspector,
+      body.is-fullscreen-scene .bottom-grid {
+        display: none;
+      }
+
+      body.is-fullscreen-scene .workspace {
+        grid-template-rows: minmax(0, 1fr);
+        gap: 0;
+        width: 100vw;
+        height: 100vh;
+        padding: 0;
+      }
+
+      body.is-fullscreen-scene .simulation-card {
+        width: 100vw;
+        height: 100vh;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      body.is-fullscreen-scene .sim-header {
+        background: var(--panel);
+      }
+
+      body.is-fullscreen-scene .sim-header p::after {
+        content: " · q pour quitter";
+      }
+
+      @media (max-width: 1180px) {
+        html,
+        body {
+          overflow: auto;
+        }
+
+        .app-shell {
+          grid-template-columns: clamp(280px, 28vw, 350px) minmax(0, 1fr);
+          height: auto;
+          min-height: 100vh;
+        }
+
+        .inspector {
+          grid-column: 1 / -1;
+          height: auto;
+          border-left: 0;
+          border-top: 1px solid var(--line);
+        }
+
+        .inspector-inner {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 16px;
+        }
+
+        .inspector-section {
+          border-top: 0;
+          padding: 0;
+        }
+      }
+
+      @media (max-width: 860px) {
+        .app-shell {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          height: auto;
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .workspace {
+          height: auto;
+          min-height: 860px;
+          grid-template-rows: minmax(580px, 70vh) auto;
+        }
+
+        .bottom-grid,
+        .inspector-inner {
+          grid-template-columns: 1fr;
+        }
+
+        .sim-header {
+          grid-template-columns: auto minmax(0, 1fr);
+        }
+
+        .sim-header p {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body data-theme="light">
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="sidebar-inner">
+          <div class="brand">
+            <h1>Agent UI Mesh</h1>
+            <p>multi-agent interface simulator</p>
+          </div>
+
+          <section class="control-section">
+            <h2>Orchestration</h2>
+            <button id="runToggle" class="primary-button" type="button">Pause orchestration</button>
+            <div class="button-row">
+              <button id="stepButton" class="secondary-button" type="button">Step</button>
+              <button id="resetButton" class="secondary-button" type="button">Reset</button>
+            </div>
+            <label class="select-field" for="scenarioSelect">
+              <span>Scenario</span>
+              <select id="scenarioSelect">
+                <option value="critpt">CritPt challenge</option>
+                <option value="support">Incident support</option>
+                <option value="design">Design review</option>
+                <option value="research">Research sprint</option>
+              </select>
+            </label>
+          </section>
+
+          <section class="control-section">
+            <h2>Parametres</h2>
+            <label class="range-field" for="workloadRange">
+              <header><span>Workload</span><output id="workloadOutput">68</output></header>
+              <input id="workloadRange" type="range" min="10" max="100" value="68">
+            </label>
+            <label class="range-field" for="skepticRange">
+              <header><span>Skeptic</span><output id="skepticOutput">54</output></header>
+              <input id="skepticRange" type="range" min="0" max="100" value="54">
+            </label>
+            <label class="range-field" for="autonomyRange">
+              <header><span>Autonomy</span><output id="autonomyOutput">72</output></header>
+              <input id="autonomyRange" type="range" min="0" max="100" value="72">
+            </label>
+          </section>
+
+          <section class="control-section">
+            <h2>Registres</h2>
+            <label class="toggle-field">
+              <span>Flux explicite</span>
+              <input id="flowToggle" type="checkbox" checked>
+            </label>
+            <label class="toggle-field">
+              <span>Boucle review</span>
+              <input id="memoryToggle" type="checkbox" checked>
+            </label>
+          </section>
+
+          <section class="control-section">
+            <h2>Agents</h2>
+            <ul class="agent-key" id="agentKey"></ul>
+          </section>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <section class="simulation-card">
+          <header class="sim-header">
+            <div class="header-actions">
+              <button id="focusButton" class="header-button icon-button" type="button" aria-label="Focus selected agent" title="Focus selected agent">
+                <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M11 4h2v4h-2V4Zm0 12h2v4h-2v-4ZM4 11h4v2H4v-2Zm12 0h4v2h-4v-2Zm-4-1.5A2.5 2.5 0 1 0 12 14a2.5 2.5 0 0 0 0-5Z" fill="currentColor"></path>
+                </svg>
+              </button>
+              <button id="fullscreenScene" class="header-button icon-button" type="button" aria-label="Enter scene fullscreen" aria-pressed="false" title="Scene fullscreen">
+                <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 4h7v3H7v4H4V4Zm9 0h7v7h-3V7h-4V4ZM4 13h3v4h4v3H4v-7Zm13 0h3v7h-7v-3h4v-4Z" fill="currentColor"></path>
+                </svg>
+              </button>
+              <button id="themeToggle" class="header-button theme-toggle-button" type="button" aria-label="Enable dark mode" aria-pressed="false" title="Enable dark mode">☾</button>
+            </div>
+            <h2>Autonomous UI Agents</h2>
+            <p id="sceneStatus">CritPt challenge · live</p>
+          </header>
+
+          <div class="scene-frame" id="sceneFrame">
+            <canvas id="agentCanvas"></canvas>
+            <div id="sceneTooltip" class="scene-tooltip" role="status"></div>
+          </div>
+
+          <div class="legend-strip">
+            <span class="legend-token"><span class="legend-dot" style="--dot:#7c8cff"></span>Survey</span>
+            <span class="legend-token"><span class="legend-dot" style="--dot:#9b83ff"></span>Plan</span>
+            <span class="legend-token"><span class="legend-dot" style="--dot:#f4a12f"></span>Orchestrate</span>
+            <span class="legend-token"><span class="legend-dot" style="--dot:#6fc8ff"></span>Research</span>
+            <span class="legend-token"><span class="legend-dot" style="--dot:#55d6c7"></span>Compute</span>
+          </div>
+        </section>
+
+        <section class="bottom-grid">
+          <article class="data-card">
+            <div class="data-card-header">
+              <h2>Run trace</h2>
+            </div>
+            <div class="data-body">
+              <ol id="traceList" class="trace-list"></ol>
+            </div>
+          </article>
+
+          <article class="data-card">
+            <div class="data-card-header">
+              <h2>Shared contract</h2>
+            </div>
+            <div class="data-body">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Agent</th>
+                    <th>Input</th>
+                    <th>Output</th>
+                    <th>Gate</th>
+                  </tr>
+                </thead>
+                <tbody id="contractRows"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+      </main>
+
+      <aside class="inspector">
+        <div class="inspector-inner">
+          <section class="inspector-section">
+            <h2>Selected agent</h2>
+            <div class="agent-profile">
+              <div class="agent-title">
+                <h3 id="selectedName">Orchestrator</h3>
+                <p id="selectedRole">Delegation, phase control, synthesis route.</p>
+              </div>
+              <div class="bar-list">
+                <div class="bar-row"><span>Queue</span><i class="bar-track"><b id="queueBar" class="bar-fill" style="--value:36%;--bar:#1677e8"></b></i><strong id="queueValue">36</strong></div>
+                <div class="bar-row"><span>Confidence</span><i class="bar-track"><b id="confidenceBar" class="bar-fill" style="--value:72%;--bar:#27AE60"></b></i><strong id="confidenceValue">72</strong></div>
+                <div class="bar-row"><span>Load</span><i class="bar-track"><b id="loadBar" class="bar-fill" style="--value:42%;--bar:#e87511"></b></i><strong id="loadValue">42</strong></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="inspector-section">
+            <h2>Global state</h2>
+            <div class="metric-grid">
+              <div class="metric"><span>Consensus</span><strong id="consensusMetric">74%</strong></div>
+              <div class="metric"><span>Evidence</span><strong id="evidenceMetric">68%</strong></div>
+              <div class="metric"><span>Risk</span><strong id="riskMetric">22%</strong></div>
+              <div class="metric"><span>Throughput</span><strong id="throughputMetric">0</strong></div>
+            </div>
+          </section>
+
+          <section class="inspector-section">
+            <h2>Message stack</h2>
+            <div id="messageStack" class="message-stack"></div>
+          </section>
+        </div>
+      </aside>
+    </div>
+
+    <script>
+      const agentDefs = [
+        {
+          id: "surveyor",
+          label: "Surveyor",
+          short: "SRV",
+          role: "Observe the interface, capture signals, normalize context.",
+          color: "#7d8cff",
+          nx: 0.18,
+          ny: 0.12,
+          contract: ["prompt", "task frame", "schema"],
+        },
+        {
+          id: "planner",
+          label: "Planner",
+          short: "PLN",
+          role: "Build the action graph and assign agent responsibilities.",
+          color: "#a48bff",
+          nx: 0.51,
+          ny: 0.12,
+          contract: ["task frame", "agent plan", "coverage"],
+        },
+        {
+          id: "orchestrator",
+          label: "Orchestrator",
+          short: "ORC",
+          role: "Delegation, routing, phase control.",
+          color: "#f4a12f",
+          nx: 0.51,
+          ny: 0.36,
+          contract: ["agent plan", "work units", "coverage"],
+        },
+        {
+          id: "researcher",
+          label: "Researcher",
+          short: "RES",
+          role: "Evidence packets, references, assumptions.",
+          color: "#72c9ff",
+          nx: 0.36,
+          ny: 0.49,
+          contract: ["work units", "evidence", "source fit"],
+        },
+        {
+          id: "computer",
+          label: "Computer",
+          short: "CMP",
+          role: "Counterfactual checks and numeric probes.",
+          color: "#55d6c7",
+          nx: 0.78,
+          ny: 0.49,
+          contract: ["hypothesis", "state sample", "residual"],
+        },
+        {
+          id: "reviewer",
+          label: "Reviewer",
+          short: "REV",
+          role: "Read the evidence bundle, check completeness and quality.",
+          color: "#41c985",
+          nx: 0.51,
+          ny: 0.66,
+          contract: ["evidence + sim", "review", "confidence"],
+        },
+        {
+          id: "critic",
+          label: "Critic",
+          short: "CRT",
+          role: "Failure modes, contradictions, adversarial review.",
+          color: "#ff7474",
+          nx: 0.09,
+          ny: 0.66,
+          contract: ["draft state", "objections", "risk"],
+        },
+        {
+          id: "adjudicator",
+          label: "Adjudicator",
+          short: "ADJ",
+          role: "Resolve conflicts and decide whether the answer can pass.",
+          color: "#e6ad55",
+          nx: 0.39,
+          ny: 0.81,
+          contract: ["objections", "ruling", "acceptance"],
+        },
+        {
+          id: "formatter",
+          label: "Formatter",
+          short: "FMT",
+          role: "Answer assembly and UI handoff.",
+          color: "#a69cff",
+          nx: 0.73,
+          ny: 0.81,
+          contract: ["validated claim", "answer", "clarity"],
+        },
+      ];
+
+      const scenarios = {
+        critpt: {
+          label: "CritPt challenge",
+          route: ["surveyor", "planner", "orchestrator", "researcher", "computer", "critic", "reviewer", "adjudicator", "formatter"],
+          pulse: "derive | test | critique | verify",
+          evidenceBias: 0.028,
+          riskBias: 0.018,
+        },
+        support: {
+          label: "Incident support",
+          route: ["surveyor", "planner", "orchestrator", "reviewer", "formatter"],
+          pulse: "triage | retrieve | resolve",
+          evidenceBias: 0.021,
+          riskBias: 0.027,
+        },
+        design: {
+          label: "Design review",
+          route: ["surveyor", "planner", "orchestrator", "critic", "computer", "reviewer", "formatter"],
+          pulse: "map | stress | align",
+          evidenceBias: 0.018,
+          riskBias: 0.016,
+        },
+        research: {
+          label: "Research sprint",
+          route: ["surveyor", "planner", "researcher", "orchestrator", "computer", "reviewer", "adjudicator", "formatter"],
+          pulse: "search | simulate | compress",
+          evidenceBias: 0.031,
+          riskBias: 0.014,
+        },
+      };
+
+      const edgeDefs = [
+        ["surveyor", "planner", "plan"],
+        ["planner", "orchestrator", "plan"],
+        ["planner", "critic", "risk"],
+        ["orchestrator", "researcher", "evidence"],
+        ["orchestrator", "computer", "sim"],
+        ["orchestrator", "reviewer", "verify"],
+        ["orchestrator", "formatter", "ship"],
+        ["researcher", "reviewer", "evidence"],
+        ["computer", "reviewer", "sim"],
+        ["critic", "surveyor", "risk"],
+        ["critic", "adjudicator", "risk"],
+        ["critic", "reviewer", "risk"],
+        ["adjudicator", "formatter", "verify"],
+        ["reviewer", "formatter", "verify"],
+      ];
+
+      const canvas = document.getElementById("agentCanvas");
+      const frame = document.getElementById("sceneFrame");
+      const ctx = canvas.getContext("2d");
+      const tooltip = document.getElementById("sceneTooltip");
+      const agents = new Map(agentDefs.map((agent) => [agent.id, {
+        ...agent,
+        queue: 22 + Math.random() * 16,
+        confidence: 62 + Math.random() * 22,
+        load: 28 + Math.random() * 22,
+        pulse: 0,
+        hot: 0,
+      }]));
+
+      const state = {
+        running: true,
+        last: performance.now(),
+        elapsed: 0,
+        spawn: 0,
+        packets: [],
+        packetId: 0,
+        selectedId: "orchestrator",
+        hoverId: null,
+        scenarioId: "critpt",
+        logs: [],
+        throughput: 0,
+        consensus: 0.74,
+        evidence: 0.68,
+        risk: 0.22,
+        focusPulse: 0,
+        settings: {
+          workload: 68,
+          skeptic: 54,
+          autonomy: 72,
+          showFlows: true,
+          memoryActive: true,
+        },
+      };
+
+      const els = {
+        runToggle: document.getElementById("runToggle"),
+        stepButton: document.getElementById("stepButton"),
+        resetButton: document.getElementById("resetButton"),
+        scenarioSelect: document.getElementById("scenarioSelect"),
+        workloadRange: document.getElementById("workloadRange"),
+        skepticRange: document.getElementById("skepticRange"),
+        autonomyRange: document.getElementById("autonomyRange"),
+        workloadOutput: document.getElementById("workloadOutput"),
+        skepticOutput: document.getElementById("skepticOutput"),
+        autonomyOutput: document.getElementById("autonomyOutput"),
+        flowToggle: document.getElementById("flowToggle"),
+        memoryToggle: document.getElementById("memoryToggle"),
+        themeToggle: document.getElementById("themeToggle"),
+        fullscreenScene: document.getElementById("fullscreenScene"),
+        focusButton: document.getElementById("focusButton"),
+        sceneStatus: document.getElementById("sceneStatus"),
+        traceList: document.getElementById("traceList"),
+        contractRows: document.getElementById("contractRows"),
+        agentKey: document.getElementById("agentKey"),
+        selectedName: document.getElementById("selectedName"),
+        selectedRole: document.getElementById("selectedRole"),
+        queueBar: document.getElementById("queueBar"),
+        queueValue: document.getElementById("queueValue"),
+        confidenceBar: document.getElementById("confidenceBar"),
+        confidenceValue: document.getElementById("confidenceValue"),
+        loadBar: document.getElementById("loadBar"),
+        loadValue: document.getElementById("loadValue"),
+        consensusMetric: document.getElementById("consensusMetric"),
+        evidenceMetric: document.getElementById("evidenceMetric"),
+        riskMetric: document.getElementById("riskMetric"),
+        throughputMetric: document.getElementById("throughputMetric"),
+        messageStack: document.getElementById("messageStack"),
+      };
+
+      function css(name, fallback) {
+        const value = getComputedStyle(document.body).getPropertyValue(name).trim();
+        return value || fallback;
+      }
+
+      function numeric(value, fallback = 0) {
+        const next = Number(value);
+        return Number.isFinite(next) ? next : fallback;
+      }
+
+      function clamp(value, min = 0, max = 1) {
+        return Math.min(max, Math.max(min, numeric(value, min)));
+      }
+
+      function pct(value) {
+        return `${Math.round(clamp(value) * 100)}%`;
+      }
+
+      function setRangeProgress(input, output) {
+        const min = Number(input.min);
+        const max = Number(input.max);
+        const value = Number(input.value);
+        const progress = ((value - min) / (max - min)) * 100;
+        input.style.setProperty("--range-progress", `${progress}%`);
+        output.textContent = input.value;
+      }
+
+      function nodePosition(agent) {
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        const padX = Math.min(84, width * 0.08);
+        const padY = Math.min(72, height * 0.10);
+        return {
+          x: padX + agent.nx * (width - padX * 2),
+          y: padY + agent.ny * (height - padY * 2),
+        };
+      }
+
+      function resizeCanvas() {
+        const rect = frame.getBoundingClientRect();
+        const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+        canvas.width = Math.floor(rect.width * dpr);
+        canvas.height = Math.floor(rect.height * dpr);
+        canvas.style.width = `${rect.width}px`;
+        canvas.style.height = `${rect.height}px`;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      function addLog(text, type = "plan") {
+        const time = String(Math.floor(state.elapsed / 1000)).padStart(3, "0");
+        state.logs.unshift({ time: `t+${time}`, text, type });
+        state.logs = state.logs.slice(0, 14);
+      }
+
+      function scenario() {
+        return scenarios[state.scenarioId];
+      }
+
+      function routeForPacket(kind = "primary") {
+        const base = scenario().route.slice();
+        if (!state.settings.memoryActive) {
+          return base.filter((id) => id !== "reviewer" && id !== "adjudicator");
+        }
+        if (kind === "critic") return ["critic", "adjudicator", "reviewer", "planner"];
+        if (kind === "review") return ["planner", "reviewer", "adjudicator", "formatter"];
+        return base;
+      }
+
+      function spawnPacket(kind = "primary") {
+        const route = routeForPacket(kind);
+        const palette = {
+          primary: "#7d8cff",
+          review: "#41c985",
+          critic: css("--canvas-risk", "#EB5757"),
+          sim: css("--canvas-agent-hot", "#e87511"),
+        };
+        state.packetId += 1;
+        state.packets.push({
+          id: state.packetId,
+          kind,
+          route,
+          segment: 0,
+          t: 0,
+          speed: 0.36 + numeric(state.settings.autonomy, 72) / 250,
+          color: palette[kind] || palette.primary,
+          size: kind === "primary" ? 4.8 : 4.2,
+        });
+        const first = agents.get(route[0]);
+        if (first) touchAgent(first, 0.12);
+      }
+
+      function touchAgent(agent, amount = 0.2) {
+        const autonomy = numeric(state.settings.autonomy, 72);
+        agent.hot = Math.min(1, agent.hot + amount);
+        agent.pulse = Math.min(1, agent.pulse + amount * 0.8);
+        agent.queue = clamp(numeric(agent.queue, 0) + amount * 18 - autonomy * 0.018, 0, 100);
+        agent.load = clamp(numeric(agent.load, 0) + amount * 14 - 1.4, 0, 100);
+      }
+
+      function arriveAt(agentId, packet) {
+        const agent = agents.get(agentId);
+        if (!agent) return;
+        touchAgent(agent, 0.24);
+
+        if (agentId === "researcher") {
+          state.evidence = clamp(numeric(state.evidence, 0.68) + scenario().evidenceBias + numeric(state.settings.workload, 68) * 0.00008);
+        } else if (agentId === "computer") {
+          state.evidence = clamp(numeric(state.evidence, 0.68) + 0.012);
+          state.risk = clamp(numeric(state.risk, 0.22) + scenario().riskBias * 0.45);
+        } else if (agentId === "critic") {
+          const skeptic = numeric(state.settings.skeptic, 54);
+          state.risk = clamp(numeric(state.risk, 0.22) + skeptic * 0.00045);
+          state.consensus = clamp(numeric(state.consensus, 0.74) - skeptic * 0.00035);
+          if (Math.random() < skeptic / 160) spawnPacket("critic");
+        } else if (agentId === "reviewer") {
+          state.consensus = clamp(numeric(state.consensus, 0.74) + 0.018 + numeric(state.evidence, 0.68) * 0.006);
+          state.risk = clamp(numeric(state.risk, 0.22) - 0.016);
+        } else if (agentId === "adjudicator") {
+          state.consensus = clamp(numeric(state.consensus, 0.74) + 0.012);
+          state.risk = clamp(numeric(state.risk, 0.22) - 0.01);
+        } else if (agentId === "formatter") {
+          state.throughput += 1;
+          state.consensus = clamp(numeric(state.consensus, 0.74) + 0.01);
+          addLog(`${packet.kind} packet delivered through ${scenario().label}`, packet.kind);
+        }
+
+        agent.confidence = clamp(numeric(agent.confidence, 50) + (numeric(state.evidence, 0.68) * 4 - numeric(state.risk, 0.22) * 3) * 0.08, 8, 98);
+      }
+
+      function updatePackets(delta) {
+        const completed = [];
+        state.packets.forEach((packet) => {
+          packet.t += packet.speed * delta;
+          while (packet.t >= 1 && packet.segment < packet.route.length - 1) {
+            packet.t -= 1;
+            packet.segment += 1;
+            arriveAt(packet.route[packet.segment], packet);
+          }
+          if (packet.segment >= packet.route.length - 1 && packet.t >= 0.98) {
+            completed.push(packet);
+          }
+        });
+        state.packets = state.packets.filter((packet) => !completed.includes(packet));
+      }
+
+      function updateWorld(delta) {
+        const autonomy = numeric(state.settings.autonomy, 72);
+        const workload = numeric(state.settings.workload, 68);
+        state.elapsed += delta * 1000;
+        state.focusPulse = Math.max(0, state.focusPulse - delta * 1.8);
+        agents.forEach((agent) => {
+          agent.hot = Math.max(0, agent.hot - delta * 1.7);
+          agent.pulse = Math.max(0, agent.pulse - delta * 1.2);
+          agent.queue = clamp(numeric(agent.queue, 0) - delta * (3.6 + autonomy * 0.04), 0, 100);
+          agent.load = clamp(numeric(agent.load, 0) - delta * 3.2, 0, 100);
+          agent.confidence = clamp(numeric(agent.confidence, 50) + (numeric(state.consensus, 0.74) * 72 - numeric(agent.confidence, 50)) * delta * 0.035, 8, 98);
+        });
+
+        state.risk = clamp(numeric(state.risk, 0.22) + (workload / 100 - numeric(state.consensus, 0.74)) * delta * 0.018, 0.04, 0.92);
+        state.consensus = clamp(numeric(state.consensus, 0.74) + (numeric(state.evidence, 0.68) - numeric(state.risk, 0.22) - numeric(state.consensus, 0.74) + 0.45) * delta * 0.022, 0.08, 0.98);
+
+        if (!state.running) return;
+        state.spawn += delta * (0.42 + workload / 42);
+        if (state.spawn >= 1) {
+          state.spawn = 0;
+          const roll = Math.random();
+          const kind = roll < 0.16 ? "review" : roll < 0.31 ? "sim" : "primary";
+          spawnPacket(kind);
+        }
+        updatePackets(delta);
+      }
+
+      function drawGrid(width, height) {
+        ctx.fillStyle = css("--canvas-bg", "#ffffff");
+        ctx.fillRect(0, 0, width, height);
+        ctx.strokeStyle = css("--canvas-grid", "#d8dee8");
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let x = 0; x <= width; x += 48) {
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, height);
+        }
+        for (let y = 0; y <= height; y += 48) {
+          ctx.moveTo(0, y);
+          ctx.lineTo(width, y);
+        }
+        ctx.stroke();
+        ctx.strokeStyle = css("--canvas-axis", "#8b96a8");
+        ctx.globalAlpha = 0.55;
+        ctx.beginPath();
+        ctx.moveTo(width / 2, 0);
+        ctx.lineTo(width / 2, height);
+        ctx.moveTo(0, height / 2);
+        ctx.lineTo(width, height / 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+
+      function bezierBetween(a, b, type = "plan") {
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const distance = Math.hypot(dx, dy);
+        const sign = type === "risk" ? -1 : 1;
+        const curve = Math.min(180, Math.max(28, distance * (type === "risk" ? 0.28 : 0.16)));
+        return {
+          c1x: a.x + dx * 0.34 - dy / Math.max(distance, 1) * curve * sign,
+          c1y: a.y + dy * 0.34 + dx / Math.max(distance, 1) * curve * sign,
+          c2x: a.x + dx * 0.66 - dy / Math.max(distance, 1) * curve * sign,
+          c2y: a.y + dy * 0.66 + dx / Math.max(distance, 1) * curve * sign,
+        };
+      }
+
+      function cubic(a, c1, c2, b, t) {
+        const mt = 1 - t;
+        return {
+          x: mt ** 3 * a.x + 3 * mt ** 2 * t * c1.x + 3 * mt * t ** 2 * c2.x + t ** 3 * b.x,
+          y: mt ** 3 * a.y + 3 * mt ** 2 * t * c1.y + 3 * mt * t ** 2 * c2.y + t ** 3 * b.y,
+        };
+      }
+
+      function edgeColor(type) {
+        return {
+          plan: "#9aa5d9",
+          evidence: "#72c9ff",
+          sim: "#55d6c7",
+          risk: "#ff7474",
+          verify: "#41c985",
+          ship: "#a69cff",
+        }[type] || "#9aa5d9";
+      }
+
+      function drawEdges() {
+        if (!state.settings.showFlows) return;
+        edgeDefs.forEach(([from, to, type]) => {
+          if (!state.settings.memoryActive && (from === "reviewer" || to === "reviewer" || from === "adjudicator" || to === "adjudicator")) return;
+          const a = nodePosition(agents.get(from));
+          const b = nodePosition(agents.get(to));
+          const c = bezierBetween(a, b, type);
+          ctx.save();
+          ctx.globalAlpha = type === "risk" ? 0.24 : 0.18;
+          ctx.strokeStyle = edgeColor(type);
+          ctx.lineWidth = type === "risk" ? 1.8 : 1.5;
+          ctx.setLineDash(type === "risk" ? [8, 9] : []);
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.bezierCurveTo(c.c1x, c.c1y, c.c2x, c.c2y, b.x, b.y);
+          ctx.stroke();
+          ctx.restore();
+        });
+      }
+
+      function labelWidth(agent) {
+        return Math.max(110, Math.min(180, 24 + agent.label.length * 10.8));
+      }
+
+      function drawSmile(cx, cy, radius, color) {
+        ctx.save();
+        ctx.strokeStyle = "rgba(239, 245, 255, 0.88)";
+        ctx.fillStyle = "rgba(239, 245, 255, 0.88)";
+        ctx.lineWidth = Math.max(2, radius * 0.07);
+        ctx.beginPath();
+        ctx.arc(cx - radius * 0.28, cy - radius * 0.13, radius * 0.07, 0, Math.PI * 2);
+        ctx.arc(cx + radius * 0.28, cy - radius * 0.13, radius * 0.07, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx, cy + radius * 0.02, radius * 0.27, 0.2 * Math.PI, 0.8 * Math.PI);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawNode(agent) {
+        const p = nodePosition(agent);
+        const selected = agent.id === state.selectedId;
+        const hovered = agent.id === state.hoverId;
+        const radius = Math.max(20, Math.min(31, canvas.clientWidth * 0.021));
+        const width = labelWidth(agent);
+        const height = Math.max(30, Math.min(40, canvas.clientHeight * 0.048));
+        const labelX = p.x - width / 2;
+        const labelY = p.y + radius + 14;
+        const glow = selected ? 0.28 + state.focusPulse * 0.4 : agent.hot * 0.32;
+
+        ctx.save();
+        if (glow > 0) {
+          ctx.shadowColor = agent.color;
+          ctx.shadowBlur = 28 * glow;
+        }
+
+        if (selected || hovered || agent.hot > 0.18) {
+          ctx.globalAlpha = selected ? 0.28 : 0.14 + agent.hot * 0.16;
+          ctx.strokeStyle = agent.color;
+          ctx.lineWidth = selected ? 6 : 4;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, radius + 18 + state.focusPulse * 8, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+
+        ctx.fillStyle = `${agent.color}28`;
+        ctx.strokeStyle = agent.color;
+        ctx.lineWidth = selected ? 2.6 : 2;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        drawSmile(p.x, p.y, radius, agent.color);
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = `${agent.color}d9`;
+        ctx.strokeStyle = agent.color;
+        ctx.lineWidth = selected ? 2.4 : 1.8;
+        ctx.beginPath();
+        ctx.roundRect(labelX, labelY, width, height, 7);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#f8f8f8";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        const fontSize = Math.max(13, Math.min(18, width / Math.max(8.2, agent.label.length * 0.82)));
+        ctx.font = `800 ${fontSize}px Inter, system-ui, sans-serif`;
+        ctx.shadowColor = "rgba(255, 255, 255, 0.38)";
+        ctx.shadowBlur = 6;
+        ctx.fillText(agent.label.toUpperCase(), p.x, labelY + height / 2 + 1);
+        ctx.restore();
+      }
+
+      function drawPackets() {
+        state.packets.forEach((packet) => {
+          const from = agents.get(packet.route[packet.segment]);
+          const to = agents.get(packet.route[Math.min(packet.segment + 1, packet.route.length - 1)]);
+          if (!from || !to) return;
+          const a = nodePosition(from);
+          const b = nodePosition(to);
+          const c = bezierBetween(a, b, packet.kind === "critic" ? "risk" : "plan");
+          const point = cubic(a, { x: c.c1x, y: c.c1y }, { x: c.c2x, y: c.c2y }, b, clamp(packet.t));
+          ctx.save();
+          ctx.shadowColor = packet.color;
+          ctx.shadowBlur = 14;
+          ctx.fillStyle = packet.color;
+          ctx.strokeStyle = css("--canvas-bg", "#ffffff");
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, packet.size + 1.3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        });
+      }
+
+      function drawStatusRibbon(width, height) {
+        ctx.save();
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        ctx.fillStyle = css("--muted", "#4b5563");
+        ctx.font = "800 11px Inter, system-ui, sans-serif";
+        ctx.fillText(`${scenario().pulse}  ·  consensus ${pct(state.consensus)}  ·  risk ${pct(state.risk)}`, 22, height - 32);
+        ctx.restore();
+      }
+
+      function draw() {
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        drawGrid(width, height);
+        drawEdges();
+        drawPackets();
+        agentDefs.forEach((agentDef) => drawNode(agents.get(agentDef.id)));
+        drawStatusRibbon(width, height);
+      }
+
+      function updateDom() {
+        const selected = agents.get(state.selectedId) || agents.get("orchestrator");
+        const selectedQueue = clamp(selected.queue, 0, 100);
+        const selectedConfidence = clamp(selected.confidence, 8, 98);
+        const selectedLoad = clamp(selected.load, 0, 100);
+        els.runToggle.textContent = state.running ? "Pause orchestration" : "Lancer orchestration";
+        els.sceneStatus.textContent = `${scenario().label} · ${state.running ? "live" : "paused"} · ${state.packets.length} packets`;
+        els.selectedName.textContent = selected.label;
+        els.selectedRole.textContent = selected.role;
+        els.queueBar.style.setProperty("--value", `${Math.round(selectedQueue)}%`);
+        els.confidenceBar.style.setProperty("--value", `${Math.round(selectedConfidence)}%`);
+        els.loadBar.style.setProperty("--value", `${Math.round(selectedLoad)}%`);
+        els.queueValue.textContent = Math.round(selectedQueue);
+        els.confidenceValue.textContent = Math.round(selectedConfidence);
+        els.loadValue.textContent = Math.round(selectedLoad);
+        els.consensusMetric.textContent = pct(state.consensus);
+        els.evidenceMetric.textContent = pct(state.evidence);
+        els.riskMetric.textContent = pct(state.risk);
+        els.throughputMetric.textContent = state.throughput;
+        els.traceList.innerHTML = state.logs.map((log) => `<li><time>${log.time}</time><span>${log.text}</span></li>`).join("");
+
+        const messages = [
+          ["planner", `phase ${scenario().pulse}`],
+          ["orchestrator", `phase ${scenario().pulse}`],
+          ["researcher", `evidence ${pct(state.evidence)}`],
+          ["critic", `risk ${pct(state.risk)}`],
+          ["reviewer", `consensus ${pct(state.consensus)}`],
+        ];
+        els.messageStack.innerHTML = messages.map(([id, text]) => {
+          const agent = agents.get(id);
+          return `<div class="message-line" style="--dot:${agent.color}"><span><strong>${agent.label}</strong> · ${text}</span></div>`;
+        }).join("");
+      }
+
+      function renderStaticLists() {
+        els.agentKey.innerHTML = agentDefs.map((agent) => {
+          return `<li><i style="--agent-color:${agent.color}"></i><strong>${agent.short}</strong><span>${agent.label}</span></li>`;
+        }).join("");
+        els.contractRows.innerHTML = agentDefs.map((agent) => {
+          return `<tr><td>${agent.label}</td><td>${agent.contract[0]}</td><td>${agent.contract[1]}</td><td>${agent.contract[2]}</td></tr>`;
+        }).join("");
+      }
+
+      function pointerAgent(event) {
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        let best = null;
+        let bestDistance = Infinity;
+        agents.forEach((agent) => {
+          const p = nodePosition(agent);
+          const distance = Math.hypot(p.x - x, p.y - y);
+          if (distance < bestDistance) {
+            best = agent;
+            bestDistance = distance;
+          }
+        });
+        return bestDistance < 78 ? best : null;
+      }
+
+      function moveTooltip(event, agent) {
+        if (!agent) {
+          tooltip.style.opacity = "0";
+          tooltip.style.transform = "translate(-999px, -999px)";
+          return;
+        }
+        const rect = frame.getBoundingClientRect();
+        tooltip.innerHTML = `<strong>${agent.label}</strong>${agent.role}<br>queue ${Math.round(clamp(agent.queue, 0, 100))} · confidence ${Math.round(clamp(agent.confidence, 8, 98))}`;
+        tooltip.style.opacity = "1";
+        tooltip.style.transform = `translate(${event.clientX - rect.left + 14}px, ${event.clientY - rect.top + 14}px)`;
+      }
+
+      function resetState() {
+        state.packets = [];
+        state.packetId = 0;
+        state.elapsed = 0;
+        state.spawn = 0;
+        state.throughput = 0;
+        state.consensus = 0.74;
+        state.evidence = 0.68;
+        state.risk = 0.22;
+        state.logs = [];
+        agents.forEach((agent, index) => {
+          agent.queue = 20 + index * 2.2;
+          agent.confidence = 62 + (index % 4) * 5;
+          agent.load = 26 + (index % 3) * 8;
+          agent.hot = 0;
+          agent.pulse = 0;
+        });
+        addLog(`${scenario().label} initialized`, "plan");
+        spawnPacket("primary");
+        updateDom();
+      }
+
+      function setTheme(theme) {
+        const next = theme === "dark" ? "dark" : "light";
+        document.body.dataset.theme = next;
+        const dark = next === "dark";
+        els.themeToggle.textContent = dark ? "☀" : "☾";
+        els.themeToggle.title = dark ? "Enable light mode" : "Enable dark mode";
+        els.themeToggle.setAttribute("aria-label", els.themeToggle.title);
+        els.themeToggle.setAttribute("aria-pressed", String(dark));
+        localStorage.setItem("agent-ui-theme", next);
+      }
+
+      async function setSceneFullscreen(enabled, options = {}) {
+        if (enabled && document.activeElement instanceof HTMLElement) document.activeElement.blur();
+        document.body.classList.toggle("is-fullscreen-scene", enabled);
+        els.fullscreenScene.classList.toggle("is-active", enabled);
+        els.fullscreenScene.setAttribute("aria-pressed", String(enabled));
+        els.fullscreenScene.setAttribute("aria-label", enabled ? "Exit scene fullscreen" : "Enter scene fullscreen");
+        els.fullscreenScene.title = enabled ? "Exit fullscreen (q)" : "Scene fullscreen";
+        setTimeout(resizeCanvas, 80);
+
+        if (!options.skipNative) {
+          try {
+            if (enabled && document.fullscreenEnabled && !document.fullscreenElement) {
+              await document.documentElement.requestFullscreen();
+            } else if (!enabled && document.fullscreenElement) {
+              await document.exitFullscreen();
+            }
+          } catch (_error) {
+            // App-level fullscreen remains available.
+          }
+        }
+      }
+
+      function bindControls() {
+        [els.workloadRange, els.skepticRange, els.autonomyRange].forEach((input) => {
+          const output = document.getElementById(input.id.replace("Range", "Output"));
+          setRangeProgress(input, output);
+          input.addEventListener("input", () => {
+            setRangeProgress(input, output);
+            state.settings[input.id.replace("Range", "")] = Number(input.value);
+          });
+        });
+
+        els.runToggle.addEventListener("click", () => {
+          state.running = !state.running;
+          addLog(state.running ? "orchestration resumed" : "orchestration paused", "plan");
+          updateDom();
+        });
+
+        els.stepButton.addEventListener("click", () => {
+          spawnPacket("primary");
+          updatePackets(0.18);
+          addLog("manual step injected", "plan");
+          updateDom();
+        });
+
+        els.resetButton.addEventListener("click", resetState);
+
+        els.scenarioSelect.addEventListener("change", () => {
+          state.scenarioId = els.scenarioSelect.value;
+          resetState();
+        });
+
+        els.flowToggle.addEventListener("change", () => {
+          state.settings.showFlows = els.flowToggle.checked;
+        });
+
+        els.memoryToggle.addEventListener("change", () => {
+          state.settings.memoryActive = els.memoryToggle.checked;
+          addLog(els.memoryToggle.checked ? "review loop restored" : "review loop bypassed", "review");
+        });
+
+        els.themeToggle.addEventListener("click", () => {
+          setTheme(document.body.dataset.theme === "dark" ? "light" : "dark");
+        });
+
+        els.fullscreenScene.addEventListener("click", () => {
+          setSceneFullscreen(!document.body.classList.contains("is-fullscreen-scene"));
+        });
+
+        els.focusButton.addEventListener("click", () => {
+          state.focusPulse = 1;
+        });
+
+        canvas.addEventListener("mousemove", (event) => {
+          const agent = pointerAgent(event);
+          state.hoverId = agent?.id || null;
+          moveTooltip(event, agent);
+        });
+
+        canvas.addEventListener("mouseleave", () => {
+          state.hoverId = null;
+          moveTooltip(null, null);
+        });
+
+        canvas.addEventListener("click", (event) => {
+          const agent = pointerAgent(event);
+          if (!agent) return;
+          state.selectedId = agent.id;
+          state.focusPulse = 1;
+          updateDom();
+        });
+
+        window.addEventListener("resize", resizeCanvas);
+
+        document.addEventListener("keydown", (event) => {
+          const target = event.target;
+          const typing = target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement;
+          if (typing) return;
+          if (event.key.toLowerCase() === "q" && document.body.classList.contains("is-fullscreen-scene")) {
+            event.preventDefault();
+            setSceneFullscreen(false);
+          }
+        });
+
+        document.addEventListener("fullscreenchange", () => {
+          if (!document.fullscreenElement && document.body.classList.contains("is-fullscreen-scene")) {
+            setSceneFullscreen(false, { skipNative: true });
+          }
+        });
+      }
+
+      function loop(now) {
+        const delta = Math.min(0.05, (now - state.last) / 1000);
+        state.last = now;
+        updateWorld(delta);
+        draw();
+        if (Math.floor(now / 250) !== Math.floor((now - delta * 1000) / 250)) updateDom();
+        requestAnimationFrame(loop);
+      }
+
+      renderStaticLists();
+      bindControls();
+      setTheme(localStorage.getItem("agent-ui-theme") || "light");
+      resizeCanvas();
+      resetState();
+      requestAnimationFrame(loop);
+    </script>
+  </body>
+</html>
