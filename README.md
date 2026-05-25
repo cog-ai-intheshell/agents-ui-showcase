@@ -1,20 +1,34 @@
 # Agent UI Mesh
 
-Vitrine HTML autonome pour visualiser un graphe d'agents UI qui interagissent autour d'une tache complexe : survey, planning, orchestration, recherche, calcul, review, critique, adjudication et formatting.
+Standalone HTML showcase for visualizing a mesh of specialized agents collaborating on a complex task.
 
-Inspiration : Hugging Face `physics-intern`, notamment l'idee d'un agent scientifique autonome evalue par un benchmark de type CritPt.
+## Live Demo
 
-Le graphe principal reprend le style visuel de la reference fournie : roles en capsules lumineuses, visage circulaire pour chaque agent et arcs fins entre agents, avec une grille de fond issue du design system.
+[Open the Vercel deployment](https://agents-ui-showcase.vercel.app)
 
-## Lancer
+![Agent UI Mesh screenshot](docs/screenshot.png)
+
+## What It Shows
+
+- Agent roles for survey, planning, orchestration, research, calculation, review, critique, adjudication, and formatting.
+- A luminous node graph with role capsules, agent faces, and relationship arcs.
+- A self-contained static interface with no build step.
+
+## Run Locally
 
 ```bash
-cd /Users/augustinmorieux/Desktop/dum-e/agents-ui-showcase
 python3 -m http.server 8770
 ```
 
-Puis ouvrir :
+Then open:
 
 ```text
 http://localhost:8770
+```
+
+## Project Structure
+
+```text
+index.html       Full standalone UI
+docs/            README screenshot assets
 ```
