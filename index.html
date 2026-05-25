@@ -843,7 +843,7 @@
       }
     </style>
   </head>
-  <body data-theme="light">
+  <body data-theme="dark">
     <div class="app-shell">
       <aside class="sidebar">
         <div class="sidebar-inner">
@@ -919,7 +919,7 @@
                   <path d="M4 4h7v3H7v4H4V4Zm9 0h7v7h-3V7h-4V4ZM4 13h3v4h4v3H4v-7Zm13 0h3v7h-7v-3h4v-4Z" fill="currentColor"></path>
                 </svg>
               </button>
-              <button id="themeToggle" class="header-button theme-toggle-button" type="button" aria-label="Enable dark mode" aria-pressed="false" title="Enable dark mode">☾</button>
+              <button id="themeToggle" class="header-button theme-toggle-button" type="button" aria-label="Enable light mode" aria-pressed="true" title="Enable light mode">☀</button>
             </div>
             <h2>Autonomous UI Agents</h2>
             <p id="sceneStatus">CritPt challenge · live</p>
@@ -1817,7 +1817,7 @@
 
       renderStaticLists();
       bindControls();
-      setTheme(localStorage.getItem("agent-ui-theme") || "light");
+      setTheme(localStorage.getItem("agent-ui-theme") || "dark");
       resizeCanvas();
       resetState();
       requestAnimationFrame(loop);
